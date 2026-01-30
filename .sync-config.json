@@ -1,0 +1,134 @@
+{
+    "description": "Configuration for syncing with upstream Medusa repositories",
+    "upstream": {
+        "storefront": {
+            "repo": "https://github.com/medusajs/nextjs-starter-medusa.git",
+            "branch": "main"
+        },
+        "backend": {
+            "repo": "https://github.com/medusajs/medusa-starter-default.git",
+            "branch": "master"
+        }
+    },
+    "strategy": "sync-all-except-preserved",
+    "backend": {
+        "preserve": [
+            "medusa-config.ts",
+            "src/lib/",
+            "src/scripts/railway/",
+            "src/scripts/seed.ts",
+            "railway.json",
+            ".env",
+            ".env.template"
+        ],
+        "skipFromUpstream": [
+            "node_modules",
+            ".git",
+            "package-lock.json",
+            ".vscode"
+        ],
+        "postSync": {
+            "package.json": {
+                "mergeStrategy": "upstream-base-with-additions",
+                "additions": {
+                    "scripts": {
+                        "preinstall": "npx only-allow pnpm",
+                        "build": "medusa build && node src/scripts/railway/postBuild.js",
+                        "build:ci": "medusa build",
+                        "start": "node src/scripts/railway/start.js && cd .medusa/server && medusa start --verbose"
+                    },
+                    "dependencies": {
+                        "@medusajs/dashboard": "latest",
+                        "@medusajs/draft-order": "latest",
+                        "@medusajs/event-bus-redis": "latest",
+                        "@medusajs/file-s3": "latest",
+                        "@medusajs/notification": "latest",
+                        "@medusajs/payment-stripe": "latest",
+                        "@medusajs/workflow-engine-redis": "latest",
+                        "pg": "^8.16.3"
+                    },
+                    "engines": {
+                        "node": ">=20",
+                        "pnpm": ">=10"
+                    },
+                    "packageManager": "pnpm@10.24.0"
+                }
+            },
+            ".env.template": {
+                "strategy": "append",
+                "content": [
+                    "",
+                    "# Railway-specific",
+                    "BACKEND_URL=http://localhost:9000",
+                    "MEDUSA_WORKER_MODE=shared",
+                    "SHOULD_DISABLE_ADMIN=false",
+                    "",
+                    "# S3 Storage (optional)",
+                    "AWS_DEFAULT_REGION=",
+                    "AWS_ACCESS_KEY_ID=",
+                    "AWS_SECRET_ACCESS_KEY=",
+                    "AWS_S3_BUCKET_NAME=",
+                    "AWS_ENDPOINT_URL=",
+                    "AWS_S3_FILE_URL=",
+                    "",
+                    "# Stripe (optional)",
+                    "STRIPE_API_KEY=",
+                    "STRIPE_WEBHOOK_SECRET=",
+                    "",
+                    "# Resend (optional)",
+                    "RESEND_API_KEY=",
+                    "RESEND_FROM_EMAIL=",
+                    "",
+                    "# Admin credentials for seeding",
+                    "MEDUSA_ADMIN_EMAIL=",
+                    "MEDUSA_ADMIN_PASSWORD=",
+                    "MEDUSA_PUBLISHABLE_KEY="
+                ]
+            }
+        }
+    },
+    "storefront": {
+        "preserve": [
+            "check-backend.sh",
+            "railway.json",
+            ".env.local",
+            ".env.template"
+        ],
+        "skipFromUpstream": [
+            "node_modules",
+            ".next",
+            ".git",
+            ".yarn",
+            "yarn.lock",
+            "check-env-variables.js",
+            ".github"
+        ],
+        "postSync": {
+            "package.json": {
+                "mergeStrategy": "upstream-base-with-additions",
+                "additions": {
+                    "name": "storefront",
+                    "scripts": {
+                        "build:railway": "sh ./check-backend.sh && next build"
+                    },
+                    "packageManager": "pnpm@10.24.0"
+                }
+            },
+            "next.config.js": {
+                "strategy": "remove-lines",
+                "patterns": [
+                    "checkEnvVariables",
+                    "check-env-variables"
+                ]
+            },
+            ".env.template": {
+                "strategy": "append",
+                "content": [
+                    "",
+                    "# Railway-specific",
+                    "MAX_RETRIES=20"
+                ]
+            }
+        }
+    }
+}

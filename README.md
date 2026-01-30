@@ -86,8 +86,48 @@ cd storefront
 pnpm dev
 ```
 
+## 🔄 Syncing with Upstream
+
+This repository is based on:
+- **Storefront**: [medusajs/nextjs-starter-medusa](https://github.com/medusajs/nextjs-starter-medusa)
+- **Backend**: [medusajs/medusa-starter-default](https://github.com/medusajs/medusa-starter-default)
+
+To sync with the latest upstream changes while preserving Railway-specific customizations:
+
+### Manual Sync
+
+```bash
+# Dry run (see what would change)
+./scripts/sync-upstream.sh --dry-run
+
+# Sync both components to a new branch
+./scripts/sync-upstream.sh
+
+# Sync only backend or storefront
+./scripts/sync-upstream.sh --backend-only
+./scripts/sync-upstream.sh --storefront-only
+```
+
+### GitHub Actions
+
+You can also trigger a sync from the GitHub Actions tab:
+1. Go to **Actions** → **Sync Upstream**
+2. Click **Run workflow**
+3. Select components to sync
+4. A PR will be created with the changes
+
+### Preserved Customizations
+
+The sync automatically preserves:
+- `backend/medusa-config.ts` (Railway modules configuration)
+- `backend/src/lib/constants.ts` (environment variables)
+- `backend/src/scripts/railway/` (Railway deployment scripts)
+- `storefront/check-backend.sh` (Railway health check)
+- `railway.json` files
+
 ## 📚 Resources
 
 - [Medusa Documentation](https://docs.medusajs.com/)
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Railway Documentation](https://docs.railway.app/)
+

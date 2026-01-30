@@ -1,0 +1,179 @@
+name: Sync Upstream
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      component:
+        description: 'Component to sync'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - backend
+          - storefront
+      dry_run:
+        description: 'Dry run (show changes without applying)'
+        required: false
+        default: false
+        type: boolean
+
+  # Weekly check every Monday at 9 AM UTC
+  schedule:
+    - cron: '0 9 * * 1'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Install jq
+        run: sudo apt-get install -y jq
+      
+      - name: Determine sync options
+        id: options
+        run: |
+          OPTS=""
+          # For scheduled runs, inputs are empty - sync both by default
+          COMPONENT="${{ inputs.component }}"
+          DRY_RUN="${{ inputs.dry_run }}"
+          
+          if [ "$COMPONENT" = "backend" ]; then
+            OPTS="--backend-only"
+          elif [ "$COMPONENT" = "storefront" ]; then
+            OPTS="--storefront-only"
+          fi
+          
+          if [ "$DRY_RUN" = "true" ]; then
+            OPTS="$OPTS --dry-run"
+          fi
+          
+          echo "opts=$OPTS" >> $GITHUB_OUTPUT
+          echo "branch=update/sync-upstream-$(date +%Y%m%d-%H%M)" >> $GITHUB_OUTPUT
+          echo "is_scheduled=${{ github.event_name == 'schedule' }}" >> $GITHUB_OUTPUT
+      
+      - name: Run sync script
+        run: |
+          ./scripts/sync-upstream.sh --branch ${{ steps.options.outputs.branch }} --no-branch ${{ steps.options.outputs.opts }}
+      
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet HEAD; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No changes detected - repository is already in sync with upstream"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Changes detected from upstream"
+          fi
+      
+      - name: Extract package updates
+        if: steps.changes.outputs.has_changes == 'true'
+        id: packages
+        run: |
+          # Extract package.json diffs for both backend and storefront
+          UPDATES=""
+          
+          # Backend package changes
+          if git diff HEAD -- backend/package.json | grep -q "dependencies"; then
+            BACKEND_DEPS=$(git diff HEAD -- backend/package.json | grep -E '^\+.*"@medusajs' | sed 's/[+",]//g' | awk '{print "- " $1 ": " $2}' | head -10)
+            if [ -n "$BACKEND_DEPS" ]; then
+              UPDATES="${UPDATES}**Backend:**\n${BACKEND_DEPS}\n\n"
+            fi
+          fi
+          
+          # Storefront package changes
+          if git diff HEAD -- storefront/package.json | grep -q "dependencies"; then
+            STOREFRONT_DEPS=$(git diff HEAD -- storefront/package.json | grep -E '^\+.*"@medusajs' | sed 's/[+",]//g' | awk '{print "- " $1 ": " $2}' | head -10)
+            if [ -n "$STOREFRONT_DEPS" ]; then
+              UPDATES="${UPDATES}**Storefront:**\n${STOREFRONT_DEPS}\n"
+            fi
+          fi
+          
+          if [ -n "$UPDATES" ]; then
+            echo "has_updates=true" >> $GITHUB_OUTPUT
+            # Save to file for multiline output
+            echo -e "$UPDATES" > /tmp/package_updates.txt
+          else
+            echo "has_updates=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Commit and push changes
+        if: steps.changes.outputs.has_changes == 'true' && inputs.dry_run != 'true'
+        run: |
+          git checkout -b ${{ steps.options.outputs.branch }}
+          git add -A
+          git commit -m "chore: sync with upstream Medusa repositories
+
+          Automated sync from upstream:
+          - Storefront: medusajs/nextjs-starter-medusa
+          - Backend: medusajs/medusa-starter-default
+          
+          Railway-specific customizations preserved."
+          git push -u origin ${{ steps.options.outputs.branch }}
+      
+      - name: Create Pull Request
+        if: steps.changes.outputs.has_changes == 'true' && inputs.dry_run != 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.options.outputs.branch }}
+          title: "chore: sync with upstream Medusa repositories"
+          body: |
+            ## Upstream Sync
+            
+            This PR syncs the repository with the latest changes from upstream Medusa repositories:
+            
+            - **Storefront**: [medusajs/nextjs-starter-medusa](https://github.com/medusajs/nextjs-starter-medusa)
+            - **Backend**: [medusajs/medusa-starter-default](https://github.com/medusajs/medusa-starter-default)
+            
+            ### Trigger: `${{ github.event_name == 'schedule' && 'Scheduled (Weekly Monday)' || 'Manual' }}`
+            
+            ${{ steps.packages.outputs.has_updates == 'true' && '### Package Updates' || '' }}
+            ${{ steps.packages.outputs.has_updates == 'true' && '```' || '' }}
+            ${{ steps.packages.outputs.has_updates == 'true' && 'See package.json diff for details' || '' }}
+            ${{ steps.packages.outputs.has_updates == 'true' && '```' || '' }}
+            
+            ### Preserved Customizations
+            
+            - ✅ `backend/medusa-config.ts` (custom modules)
+            - ✅ `backend/src/lib/constants.ts`
+            - ✅ `backend/src/scripts/railway/`
+            - ✅ `storefront/check-backend.sh`
+            - ✅ `railway.json` files
+            
+            ### Verification Checklist
+            
+            - [ ] Build backend: `pnpm --filter backend build:ci`
+            - [ ] Build storefront: `pnpm --filter storefront build`
+            - [ ] Test locally with `pnpm dev`
+            - [ ] Review dependency changes
+            
+          labels: |
+            dependencies
+            automated
+          draft: false
+      
+      - name: Summary
+        run: |
+          if [ "${{ steps.changes.outputs.has_changes }}" = "true" ]; then
+            echo "✅ Changes detected and PR created"
+          else
+            echo "ℹ️ No changes detected - repository is already in sync"
+          fi
+

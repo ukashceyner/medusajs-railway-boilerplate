@@ -3,7 +3,8 @@ name: Railway Simulation
 on:
   workflow_dispatch:
   push:
-    branches: [ staging ]
+    branches-ignore:
+      - prod
 
 jobs:
   simulate-railway:
@@ -84,7 +85,7 @@ jobs:
       - name: Build Storefront (Simulating Railway)
         working-directory: storefront
         env:
-          NEXT_PUBLIC_MEDUSA_BACKEND_URL: http://localhost:9000
+          MEDUSA_BACKEND_URL: http://localhost:9000
           NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: ${{ env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY }}
           MAX_RETRIES: 10
         run: |

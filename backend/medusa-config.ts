@@ -25,7 +25,7 @@ import {
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
-const medusaConfig = {
+module.exports = defineConfig({
   projectConfig: {
     databaseUrl: DATABASE_URL,
     databaseLogging: false,
@@ -148,6 +148,4 @@ const medusaConfig = {
       ]
       : [])
   ]
-}
-
-export default defineConfig(medusaConfig)
+});

@@ -1,7 +1,7 @@
 export const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:9000"
 export const STORE_CORS = process.env.STORE_CORS || "http://localhost:8000,https://docs.medusajs.com"
-export const ADMIN_CORS = process.env.ADMIN_CORS || "http://localhost:5173,http://localhost:9000,https://docs.medusajs.com"
-export const AUTH_CORS = process.env.AUTH_CORS || "http://localhost:5173,http://localhost:9000,https://docs.medusajs.com"
+export const ADMIN_CORS = process.env.ADMIN_CORS || `http://localhost:5173,http://localhost:9000,${BACKEND_URL},https://docs.medusajs.com`
+export const AUTH_CORS = process.env.AUTH_CORS || `http://localhost:5173,http://localhost:9000,${BACKEND_URL},https://docs.medusajs.com`
 
 export const DATABASE_URL = process.env.DATABASE_URL
 export const REDIS_URL = process.env.REDIS_URL

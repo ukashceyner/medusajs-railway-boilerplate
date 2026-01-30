@@ -67,8 +67,7 @@ check_prerequisites() {
 read_config() {
     STOREFRONT_REPO=$(jq -r '.upstream.storefront.repo' "$CONFIG_FILE")
     STOREFRONT_BRANCH=$(jq -r '.upstream.storefront.branch' "$CONFIG_FILE")
-    BACKEND_REPO=$(jq -r '.upstream.backend.repo' "$CONFIG_FILE")
-    BACKEND_BRANCH=$(jq -r '.upstream.backend.branch' "$CONFIG_FILE")
+    # Backend now uses create-medusa-app instead of git clone, no repo/branch needed
 }
 
 clone_upstream() {
@@ -82,8 +81,21 @@ clone_upstream() {
     fi
     
     if [ "$SYNC_BACKEND" = true ]; then
-        log_info "  Cloning backend..."
-        git clone --depth 1 --branch "$BACKEND_BRANCH" "$BACKEND_REPO" "$TEMP_DIR/backend-upstream" 2>&1 | grep -v "^remote:"
+        log_info "  Creating backend with create-medusa-app..."
+        
+        # Isolate from root workspace to prevent pnpm lockfile errors
+        touch "$TEMP_DIR/pnpm-workspace.yaml"
+        
+        # Use create-medusa-app to scaffold a fresh backend (non-interactive)
+        # --skip-db: Skip database creation/migrations (we don't need them for sync)
+        # --no-browser: Don't try to open browser after creation
+        # --directory-path: Specify where to create the project (avoids dot in path issue)
+        # echo n: Answer 'no' to the Next.js starter prompt for fully non-interactive execution
+        # CI=true: Fixes pnpm error "Aborted removal of modules directory due to no TTY"
+        echo n | CI=true pnpm dlx create-medusa-app@latest backend-upstream --directory-path "$TEMP_DIR" --skip-db --no-browser 2>&1 || {
+            log_error "Failed to create backend with create-medusa-app"
+            exit 1
+        }
     fi
     
     log_success "Upstream cloned"

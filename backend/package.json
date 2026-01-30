@@ -13,33 +13,32 @@
     "medusa"
   ],
   "scripts": {
-    "preinstall": "npx only-allow pnpm",
     "build": "medusa build && node src/scripts/railway/postBuild.js",
-    "build:ci": "medusa build",
     "seed": "medusa exec ./src/scripts/seed.ts",
     "start": "node src/scripts/railway/start.js && cd .medusa/server && medusa start --verbose",
     "dev": "medusa develop",
     "test:integration:http": "TEST_TYPE=integration:http NODE_OPTIONS=--experimental-vm-modules jest --silent=false --runInBand --forceExit",
     "test:integration:modules": "TEST_TYPE=integration:modules NODE_OPTIONS=--experimental-vm-modules jest --silent=false --runInBand --forceExit",
-    "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit"
+    "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit",
+    "preinstall": "npx only-allow pnpm",
+    "build:ci": "medusa build"
   },
   "dependencies": {
-    "@medusajs/admin-sdk": "2.11.3",
-    "@medusajs/cli": "2.11.3",
-    "@medusajs/dashboard": "2.11.3",
-    "@medusajs/draft-order": "2.11.3",
-    "@medusajs/event-bus-redis": "2.11.3",
-    "@medusajs/file-s3": "2.11.3",
-    "@medusajs/framework": "2.11.3",
-    "@medusajs/medusa": "2.11.3",
-    "@medusajs/notification": "2.11.3",
-    "@medusajs/payment-stripe": "2.11.3",
-    "@medusajs/workflow-engine-redis": "2.11.3",
+    "@medusajs/admin-sdk": "2.13.1",
+    "@medusajs/cli": "2.13.1",
+    "@medusajs/framework": "2.13.1",
+    "@medusajs/medusa": "2.13.1",
+    "@medusajs/dashboard": "2.13.1",
+    "@medusajs/draft-order": "2.13.1",
+    "@medusajs/event-bus-redis": "2.13.1",
+    "@medusajs/file-s3": "2.13.1",
+    "@medusajs/notification": "2.13.1",
+    "@medusajs/payment-stripe": "2.13.1",
+    "@medusajs/workflow-engine-redis": "2.13.1",
     "pg": "^8.16.3"
   },
   "devDependencies": {
-    "@medusajs/admin-shared": "2.11.3",
-    "@medusajs/test-utils": "2.11.3",
+    "@medusajs/test-utils": "2.13.1",
     "@swc/core": "^1.7.28",
     "@swc/jest": "^0.2.36",
     "@types/jest": "^29.5.13",
@@ -59,10 +58,10 @@
     "node": ">=20",
     "pnpm": ">=10"
   },
+  "packageManager": "pnpm@10.24.0",
   "pnpm": {
     "overrides": {
       "esbuild@<=0.24.2": ">=0.25.0"
     }
-  },
-  "packageManager": "pnpm@10.24.0"
+  }
 }

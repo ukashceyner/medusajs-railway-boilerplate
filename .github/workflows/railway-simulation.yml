@@ -77,7 +77,9 @@ jobs:
           NODE_ENV: production
           MEDUSA_PUBLISHABLE_KEY: ${{ env.MEDUSA_PUBLISHABLE_KEY }}
         run: |
-          pnpm run start &
+          nohup pnpm run start > backend.log 2>&1 &
+          # Also show the first few lines of log to confirm it started
+          sleep 5 && head -n 20 backend.log
 
       - name: Build Storefront (Simulating Railway)
         working-directory: storefront
@@ -88,3 +90,9 @@ jobs:
         run: |
           # This runs check-backend.sh internally, then next build
           pnpm run build:railway
+
+      - name: Show Backend Logs on Failure
+        if: failure()
+        run: |
+          echo "==== BACKEND LOGS ===="
+          cat backend/backend.log || echo "No backend.log found"

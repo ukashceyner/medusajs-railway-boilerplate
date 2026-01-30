@@ -2,74 +2,43 @@
 
 # Deploy and Host MedusaJS 2.0 + Storefront on Railway
 
-Deploy a best-in-class e-commerce stack in minutes. This boilerplate brings you
-an all-in-one **MedusaJS 2.0** solution, preconfigured with the backend, admin
-dashboard, and a connected **Next.js 15** storefront. Everything you need to get
-started with a modern, feature-rich shop, fully updated to the latest Medusa
-architecture, with native support for Railway Buckets.
+This boilerplate provides a pre-configured e-commerce setup on Railway. It includes **Next.js Storefront Starter** and the **MedusaJS 2.0** backend, configured to work together out of the box.
 
 ## About Hosting MedusaJS 2.0 + Storefront
 
-Host the next-gen MedusaJS 2.0 e-commerce stack—complete with storefront, admin
-dashboard, and all necessary services—without the tedious setup. This template
-configures the **Backend**, **Storefront**, **Redis**, **PostgreSQL**, and
-**Railway Bucket** (via AssetLinker), so your shop is production-ready from the
-first deploy.
+This template automates the setup of the core services needed for a MedusaJS store. It pre-configures **PostgreSQL, Redis, and Railway Buckets** to ensure all components are connected correctly from the first deployment.
 
-Benefit from:
+**Key Features:**
 
-- **Automatic Admin Creation**: The setup script automatically seeds your
-  database and creates an admin user with your specified credentials.
-- **Unified Storage**: Uses Railway's internal Bucket storage with a custom
-  AssetLinker service to securely serve private assets, keeping your
-  infrastructure contained within Railway.
-- **Production Ready**: Strong secret generation, health checks, and optimized
-  build pipelines are standard.
-- **Scalable**: Railway handles the cloud infrastructure (servers, databases,
-  caching) so you can focus on building your business logic.
+- **Pre-configured Environment**: Backend, storefront, and database are pre-linked and ready for use.
+- **Updated Tech Stack**: Built with Medusa 2.0, Next.js 15 (App Router), and Tailwind CSS.
+- **Integrated Railway Storage**: Uses Railway's internal Bucket system for asset storage via AssetLinker.
+- **Deployment Ready**: Includes health checks, environment variable management, and build pipelines.
 
-Ideal for fast prototyping, custom e-commerce applications, and ambitious
-side-projects that need to scale.
+Suitable for prototyping, custom e-commerce projects, and production deployments that require a scalable foundation.
 
 ## Common Use Cases
 
-- **Launching a modern full-featured e-commerce store fast**: Go from zero to
-  live shop in minutes.
-- **Scaling a boutique business**: Ready for multi-warehouse inventory and
-  advanced promotions.
-- **Experimenting and Learning**: Perfect for rapid-prototyping in open source
-  commerce with the latest tech stack (Next.js 15, Medusa 2.0).
-- **Complex Custom Solutions**: A flexible foundation that enterprise platforms
-  can't match.
+- **Deploying a MedusaJS Store**: Quick setup for a new e-commerce project.
+- **Inventory & Promotions**: Ready for multi-warehouse setups and Medusa's promotion engine.
+- **Development & Prototyping**: A clean starting point for building custom commerce logic.
+- **Custom Commerce Solutions**: A flexible base for high-growth e-commerce applications.
 
 ## Dependencies for MedusaJS 2.0 + Storefront Hosting
 
-- **GitHub Account** and **Railway Account**
-- **Railway Hobby Plan**: Recommended for keeping services active and
-  persistent.
-- **API Keys (Optional)**: Stripe, etc., if you choose to install those plugins.
+- **GitHub Account** and **Railway Account** (required)
+- **Railway Hobby Plan**: Recommended for persistent database and cache services.
+- **Medusa Backend & Admin**: Pre-seeded with initial data for testing.
+- **Next.js Storefront**: Integrated starter with responsive design.
 
 ### Deployment Dependencies
 
-- [MedusaJS Official Docs](https://docs.medusajs.com/)
-- [Next.js Documentation](https://nextjs.org/docs)
+- **Service Connectivity**: Backend, Storefront, Postgres, and Redis auto-configure on deployment.
+- **Admin Access**: Admin credentials are set via environment variables and created during the first deploy.
+- **Asset Management**: Uses the "AssetLinker" service to proxy requests to Railway Buckets, handling media without external S3 configuration.
 
-### Implementation Details
+## Why Deploy on Railway?
 
-- **Auto-Configuration**: Backend, Storefront, Postgres, Redis, and AssetLinker
-  auto-configure and interact on deploy.
-- **Admin Setup**: Admin user is created automatically with `MEDUSA_ADMIN_EMAIL`
-  and `MEDUSA_ADMIN_PASSWORD`.
-- **Asset Handling**: Integrated "AssetLinker" service effectively proxies
-  requests to the private Railway Bucket, ensuring media works out of the box
-  without extra services (like MinIO).
+Railway manages the underlying infrastructure, including database hosting and scaling. It allows you to deploy the entire stack without manual server configuration, providing both vertical and horizontal scaling options.
 
-## Why Deploy MedusaJS 2.0 + Storefront on Railway?
-
-Railway is a singular platform to deploy your infrastructure stack. Railway will
-host your infrastructure so you don't have to deal with configuration, while
-allowing you to vertically and horizontally scale it.
-
-By deploying MedusaJS 2.0 + Storefront on Railway, you are one step closer to
-supporting a complete full-stack application with minimal burden. Host your
-servers, databases, AI agents, and more on Railway.
+This template is designed to provide a stable, manageable foundation for MedusaJS applications by handling the initial wiring of services on Railway.

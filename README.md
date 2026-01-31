@@ -1,4 +1,4 @@
-[![MedusaJS + Next.js Banner](./.github/medusajs-storefront-monorepo.jpg)](https://railway.com/deploy/medusajs-storefron-2?referralCode=karapi&utm_medium=integration&utm_source=template&utm_campaign=generic)
+[![MedusaJS + Next.js Banner](./.github/medusajs-storefront-monorepo.jpg)](https://railway.com/deploy/medusajs-storefront-railway-bucket?referralCode=karapi&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 # MedusaJS 2.0 + Storefront Monorepo
 
@@ -21,7 +21,7 @@ This repository is optimized for Railway. Template uses Railway's Bucket for
 media upload, avoiding extra costs of an extra service. One-click deployment on
 Railway:
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/medusajs-storefron-2?referralCode=karapi&utm_medium=integration&utm_source=template&utm_campaign=generic)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/medusajs-storefront-railway-bucket?referralCode=karapi&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 > **Note:** We patch **MedusaJS** need of publishable key to allow deployment
 > without any other extra hassles. In case you need to use it, just add the

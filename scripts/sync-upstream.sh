@@ -60,6 +60,7 @@ check_prerequisites() {
     log_info "Checking prerequisites..."
     command -v git &> /dev/null || { log_error "git required"; exit 1; }
     command -v jq &> /dev/null || { log_error "jq required (brew install jq)"; exit 1; }
+    command -v pnpm &> /dev/null || { log_error "pnpm required (npm install -g pnpm)"; exit 1; }
     [ -f "$CONFIG_FILE" ] || { log_error "Config not found: $CONFIG_FILE"; exit 1; }
     log_success "Prerequisites OK"
 }

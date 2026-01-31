@@ -37,6 +37,17 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.24.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
       - name: Setup Git
         run: |
           git config user.name "github-actions[bot]"
@@ -113,26 +124,20 @@ jobs:
             echo "has_updates=false" >> $GITHUB_OUTPUT
           fi
       
-      - name: Commit and push changes
-        if: steps.changes.outputs.has_changes == 'true' && inputs.dry_run != 'true'
-        run: |
-          git checkout -b ${{ steps.options.outputs.branch }}
-          git add -A
-          git commit -m "chore: sync with upstream Medusa repositories
-
-          Automated sync from upstream:
-          - Storefront: medusajs/nextjs-starter-medusa
-          - Backend: medusajs/medusa-starter-default
-          
-          Railway-specific customizations preserved."
-          git push -u origin ${{ steps.options.outputs.branch }}
-      
       - name: Create Pull Request
         if: steps.changes.outputs.has_changes == 'true' && inputs.dry_run != 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ steps.options.outputs.branch }}
+          commit-message: |
+            chore: sync with upstream Medusa repositories
+
+            Automated sync from upstream:
+            - Storefront: medusajs/nextjs-starter-medusa
+            - Backend: medusajs/medusa-starter-default
+            
+            Railway-specific customizations preserved.
           title: "chore: sync with upstream Medusa repositories"
           body: |
             ## Upstream Sync

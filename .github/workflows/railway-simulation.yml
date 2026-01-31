@@ -3,8 +3,6 @@ name: Railway Simulation
 on:
   workflow_dispatch:
   push:
-    branches-ignore:
-      - prod
 
 jobs:
   simulate-railway:

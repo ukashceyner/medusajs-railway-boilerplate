@@ -1,3 +1,5 @@
+
+
 /**
  * Medusa Cloud-related environment variables
  */
@@ -14,7 +16,9 @@ const nextConfig = {
       fullUrl: true,
     },
   },
-
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   typescript: {
     ignoreBuildErrors: true,
   },

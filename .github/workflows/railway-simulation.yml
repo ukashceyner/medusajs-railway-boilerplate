@@ -54,13 +54,17 @@ jobs:
           PK_KEY="pk_$(openssl rand -hex 32)"
           echo "Generated PK: $PK_KEY"
 
+          # Inject into .env files to prevent override issues
+          sed -i "s|NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=.*|NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=$PK_KEY|" storefront/.env.local
+          echo "MEDUSA_PUBLISHABLE_KEY=$PK_KEY" >> backend/.env
+
           # Also export to GITHUB_ENV for use in subsequent steps
           echo "MEDUSA_PUBLISHABLE_KEY=$PK_KEY" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=$PK_KEY" >> $GITHUB_ENV
 
       - name: Build Backend
         working-directory: backend
-        run: pnpm run build
+        run: pnpm run build -- --dev
 
       - name: Start Backend
         working-directory: backend
@@ -80,7 +84,7 @@ jobs:
         run: |
           nohup pnpm run start > backend.log 2>&1 &
           # Also show the first few lines of log to confirm it started
-          sleep 5 && head -n 20 backend.log
+          sleep 10 && head -n 30 backend.log
 
       - name: Build Storefront (Simulating Railway)
         working-directory: storefront
@@ -89,7 +93,6 @@ jobs:
           NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: ${{ env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY }}
           MAX_RETRIES: 10
         run: |
-          # This runs check-backend.sh internally, then next build
           pnpm run build:railway
 
       - name: Show Backend Logs on Failure

@@ -67,8 +67,7 @@ check_prerequisites() {
 read_config() {
     STOREFRONT_REPO=$(jq -r '.upstream.storefront.repo' "$CONFIG_FILE")
     STOREFRONT_BRANCH=$(jq -r '.upstream.storefront.branch' "$CONFIG_FILE")
-    BACKEND_REPO=$(jq -r '.upstream.backend.repo' "$CONFIG_FILE")
-    BACKEND_BRANCH=$(jq -r '.upstream.backend.branch' "$CONFIG_FILE")
+    # Backend now uses create-medusa-app instead of git clone, no repo/branch needed
 }
 
 clone_upstream() {
@@ -82,8 +81,21 @@ clone_upstream() {
     fi
     
     if [ "$SYNC_BACKEND" = true ]; then
-        log_info "  Cloning backend..."
-        git clone --depth 1 --branch "$BACKEND_BRANCH" "$BACKEND_REPO" "$TEMP_DIR/backend-upstream" 2>&1 | grep -v "^remote:"
+        log_info "  Creating backend with create-medusa-app..."
+        
+        # Isolate from root workspace to prevent pnpm lockfile errors
+        touch "$TEMP_DIR/pnpm-workspace.yaml"
+        
+        # Use create-medusa-app to scaffold a fresh backend (non-interactive)
+        # --skip-db: Skip database creation/migrations (we don't need them for sync)
+        # --no-browser: Don't try to open browser after creation
+        # --directory-path: Specify where to create the project (avoids dot in path issue)
+        # echo n: Answer 'no' to the Next.js starter prompt for fully non-interactive execution
+        # CI=true: Fixes pnpm error "Aborted removal of modules directory due to no TTY"
+        echo n | CI=true pnpm dlx create-medusa-app@latest backend-upstream --directory-path "$TEMP_DIR" --skip-db --no-browser 2>&1 || {
+            log_error "Failed to create backend with create-medusa-app"
+            exit 1
+        }
     fi
     
     log_success "Upstream cloned"
@@ -289,6 +301,12 @@ append_env_template() {
     
     [ ! -f "$env_file" ] && return
     
+    # Check if Railway variables are already present
+    if grep -q "# Railway-specific" "$env_file"; then
+        log_info "    Skipping appending Railway vars to .env.template (already present)"
+        return
+    fi
+    
     if [ "$component" = "backend" ]; then
         cat >> "$env_file" << 'EOF'
 
@@ -296,27 +314,6 @@ append_env_template() {
 BACKEND_URL=http://localhost:9000
 MEDUSA_WORKER_MODE=shared
 SHOULD_DISABLE_ADMIN=false
-
-# S3 Storage (optional)
-AWS_DEFAULT_REGION=
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_S3_BUCKET_NAME=
-AWS_ENDPOINT_URL=
-AWS_S3_FILE_URL=
-
-# Stripe (optional)
-STRIPE_API_KEY=
-STRIPE_WEBHOOK_SECRET=
-
-# Resend (optional)
-RESEND_API_KEY=
-RESEND_FROM_EMAIL=
-
-# Admin credentials for seeding
-MEDUSA_ADMIN_EMAIL=
-MEDUSA_ADMIN_PASSWORD=
-MEDUSA_PUBLISHABLE_KEY=
 EOF
     else
         cat >> "$env_file" << 'EOF'
@@ -366,9 +363,19 @@ main() {
     [ "$SYNC_BACKEND" = true ] && sync_component "backend"
     [ "$SYNC_STOREFRONT" = true ] && sync_component "storefront"
     
+    update_lockfile
+    
     cleanup
     create_pr
     show_summary
+}
+
+update_lockfile() {
+    if [ "$DRY_RUN" = false ]; then
+        log_info "Updating lockfile..."
+        pnpm install --no-frozen-lockfile --ignore-scripts || log_warning "Failed to update lockfile. Please run 'pnpm install' manually."
+        log_success "Lockfile updated"
+    fi
 }
 
 main

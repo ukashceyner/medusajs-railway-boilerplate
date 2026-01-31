@@ -36,18 +36,31 @@ const ensurePublishableKey = async () => {
   try {
     await updateClient.connect();
     console.log("Ensuring publishable key matches MEDUSA_PUBLISHABLE_KEY...");
-    // Update the first publishable key found, or one with title Webshop
-    const res = await updateClient.query(
-      "UPDATE api_key SET token = $1 WHERE title = $2 OR (type = 'publishable' AND token != $1);",
-      [publishableKey, "Webshop"],
+
+    // Check if any key already has this token to avoid unique constraint violation
+    const checkRes = await updateClient.query(
+      "SELECT id FROM api_key WHERE token = $1 LIMIT 1;",
+      [publishableKey],
     );
-    if (res.rowCount > 0) {
-      console.log(`Successfully updated ${res.rowCount} publishable key(s).`);
+
+    if (checkRes.rowCount > 0) {
+      console.log("Publishable key already matches a record in the database.");
     } else {
-      console.log("No publishable keys needed updating.");
+      // Update the Webshop key, or the first publishable key found
+      const res = await updateClient.query(
+        "UPDATE api_key SET token = $1 WHERE id = (SELECT id FROM api_key WHERE title = $2 OR type = 'publishable' ORDER BY (title = $2) DESC, created_at ASC LIMIT 1);",
+        [publishableKey, "Webshop"],
+      );
+      if (res.rowCount > 0) {
+        console.log(`Successfully updated publishable key.`);
+      } else {
+        console.log(
+          "No publishable keys found to update. (Expected if seeding hasn't created one yet)",
+        );
+      }
     }
   } catch (error) {
-    console.error("Failed to ensure publishable key:", error);
+    console.error("Failed to update publishable key:", error);
   } finally {
     await updateClient.end();
   }

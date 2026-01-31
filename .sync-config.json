@@ -6,8 +6,8 @@
             "branch": "main"
         },
         "backend": {
-            "repo": "https://github.com/medusajs/medusa-starter-default.git",
-            "branch": "master"
+            "source": "create-medusa-app",
+            "description": "Backend is scaffolded using npx create-medusa-app@latest --skip-db --no-browser"
         }
     },
     "strategy": "sync-all-except-preserved",
@@ -25,7 +25,11 @@
             "node_modules",
             ".git",
             "package-lock.json",
-            ".vscode"
+            "pnpm-lock.yaml",
+            "yarn.lock",
+            ".vscode",
+            ".yarnrc.yml",
+            ".yarn"
         ],
         "postSync": {
             "package.json": {
@@ -101,7 +105,8 @@
             ".yarn",
             "yarn.lock",
             "check-env-variables.js",
-            ".github"
+            ".github",
+            ".yarnrc.yml"
         ],
         "postSync": {
             "package.json": {

@@ -27,7 +27,12 @@ const checkIfSeeded = async () => {
 
 const ensurePublishableKey = async () => {
   const publishableKey = process.env.MEDUSA_PUBLISHABLE_KEY;
-  if (!publishableKey) return;
+  if (!publishableKey) {
+    console.log(
+      "MEDUSA_PUBLISHABLE_KEY not set, skipping publishable key sync.",
+    );
+    return;
+  }
 
   const updateClient = new Client({
     connectionString: process.env.DATABASE_URL,
@@ -37,27 +42,30 @@ const ensurePublishableKey = async () => {
     await updateClient.connect();
     console.log("Ensuring publishable key matches MEDUSA_PUBLISHABLE_KEY...");
 
-    // Check if any key already has this token to avoid unique constraint violation
-    const checkRes = await updateClient.query(
-      "SELECT id FROM api_key WHERE token = $1 LIMIT 1;",
-      [publishableKey],
+    // Fetch all publishable keys
+    const { rows } = await updateClient.query(
+      "SELECT id, token FROM api_key WHERE type = 'publishable' ORDER BY created_at ASC",
     );
 
-    if (checkRes.rowCount > 0) {
-      console.log("Publishable key already matches a record in the database.");
-    } else {
-      // Update the Webshop key, or the first publishable key found
-      const res = await updateClient.query(
-        "UPDATE api_key SET token = $1 WHERE id = (SELECT id FROM api_key WHERE title = $2 OR type = 'publishable' ORDER BY (title = $2) DESC, created_at ASC LIMIT 1);",
-        [publishableKey, "Webshop"],
+    if (rows.length === 0) {
+      throw new Error(
+        "No publishable key found in the database. Ensure the seed script has run.",
       );
-      if (res.rowCount > 0) {
-        console.log(`Successfully updated publishable key.`);
-      } else {
-        console.log(
-          "No publishable keys found to update. (Expected if seeding hasn't created one yet)",
-        );
-      }
+    }
+
+    const [firstKey, ...extraKeys] = rows;
+    if (firstKey.token !== publishableKey) {
+      await updateClient.query("UPDATE api_key SET token = $1 WHERE id = $2", [
+        publishableKey,
+        firstKey.id,
+      ]);
+      console.log(
+        `Updated publishable key (ID: ${firstKey.id}) to match environment variable.`,
+      );
+    } else {
+      console.log(
+        `Publishable key (ID: ${firstKey.id}) already matches environment variable.`,
+      );
     }
   } catch (error) {
     console.error("Failed to update publishable key:", error);

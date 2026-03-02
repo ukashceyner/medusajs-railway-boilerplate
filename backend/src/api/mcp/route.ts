@@ -1,3 +1,4 @@
+// MCP JSON-RPC 2.0 endpoint for UCP tool dispatch
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { handleMcpRequest } from "../../lib/mcp/server"
 import { registerAllTools } from "../../lib/mcp/tools"

@@ -12,38 +12,32 @@ const serializeJsonLd = (data: Record<string, unknown>) =>
 export default function RootLayout(props: { children: React.ReactNode }) {
   const baseUrl = getBaseURL()
 
-  const webSiteJsonLd = {
+  const globalJsonLd = {
     "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "Medusa Store",
-    url: baseUrl,
-  }
-
-  const organizationJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: "Medusa Store",
-    url: baseUrl,
-    logo: `${baseUrl}/opengraph-image.jpg`,
+    "@graph": [
+      {
+        "@type": "WebSite",
+        name: "Medusa Store",
+        url: baseUrl,
+      },
+      {
+        "@type": "Organization",
+        name: "Medusa Store",
+        url: baseUrl,
+        logo: `${baseUrl}/opengraph-image.jpg`,
+      },
+    ],
   }
 
   return (
     <html lang="en" data-mode="light">
-      <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: serializeJsonLd(webSiteJsonLd),
-          }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: serializeJsonLd(organizationJsonLd),
-          }}
-        />
-      </head>
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: serializeJsonLd(globalJsonLd),
+          }}
+        />
         <main className="relative">{props.children}</main>
       </body>
     </html>

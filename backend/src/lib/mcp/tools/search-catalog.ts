@@ -35,12 +35,22 @@ const handler: ToolHandler = async (params, scope) => {
   const offset = Math.max(0, Number(params.offset) || 0)
 
   const remoteQuery = scope.resolve(ContainerRegistrationKeys.REMOTE_QUERY)
+
+  const likePattern = `%${query}%`
+  const filters: Record<string, unknown> = query
+    ? {
+        $or: [
+          { title: { $ilike: likePattern } },
+          { description: { $ilike: likePattern } },
+          { handle: { $ilike: likePattern } },
+        ],
+      }
+    : {}
+
   const queryObject = remoteQueryObjectFromString({
     entryPoint: "product",
     variables: {
-      filters: {
-        q: query,
-      },
+      filters,
       take: limit,
       skip: offset,
     },

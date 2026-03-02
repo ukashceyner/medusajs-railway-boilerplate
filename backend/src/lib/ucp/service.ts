@@ -131,10 +131,19 @@ export const asArray = <T>(value: unknown): T[] => {
     return value as T[]
   }
 
-  if (value && typeof value === "object" && "rows" in value) {
-    const rows = (value as { rows?: T[] }).rows
-    if (Array.isArray(rows)) {
-      return rows
+  if (value && typeof value === "object") {
+    if ("data" in value) {
+      const data = (value as { data?: T[] }).data
+      if (Array.isArray(data)) {
+        return data
+      }
+    }
+
+    if ("rows" in value) {
+      const rows = (value as { rows?: T[] }).rows
+      if (Array.isArray(rows)) {
+        return rows
+      }
     }
   }
 

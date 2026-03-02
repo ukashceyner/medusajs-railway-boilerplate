@@ -12,7 +12,7 @@ import { getCheckout, updateCheckout } from "../../../../../lib/ucp/service"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
-    getUcpAgentProfileOrThrow(req)
+    await getUcpAgentProfileOrThrow(req)
     const checkout = await getCheckout(req.scope, req.params.id)
     res.status(200).json(checkout)
   } catch (error) {
@@ -23,7 +23,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
 export async function PUT(req: MedusaRequest, res: MedusaResponse) {
   try {
-    getUcpAgentProfileOrThrow(req)
+    await getUcpAgentProfileOrThrow(req)
 
     const parsedBody = ucpCheckoutUpdateSchema.safeParse(req.body)
     if (!parsedBody.success) {

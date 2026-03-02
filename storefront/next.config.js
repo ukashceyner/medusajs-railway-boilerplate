@@ -5,6 +5,7 @@
  */
 const S3_HOSTNAME = process.env.MEDUSA_CLOUD_S3_HOSTNAME
 const S3_PATHNAME = process.env.MEDUSA_CLOUD_S3_PATHNAME
+const MEDUSA_BACKEND_URL = process.env.MEDUSA_BACKEND_URL
 
 /**
  * @type {import('next').NextConfig}
@@ -50,6 +51,24 @@ const nextConfig = {
           ]
         : []),
     ],
+  },
+  async rewrites() {
+    if (!MEDUSA_BACKEND_URL) {
+      return []
+    }
+
+    const backendBaseUrl = MEDUSA_BACKEND_URL.replace(/\/$/, "")
+
+    return [
+      {
+        source: "/.well-known/ucp",
+        destination: `${backendBaseUrl}/.well-known/ucp`,
+      },
+      {
+        source: "/ucp/v1/:path*",
+        destination: `${backendBaseUrl}/ucp/v1/:path*`,
+      },
+    ]
   },
 }
 

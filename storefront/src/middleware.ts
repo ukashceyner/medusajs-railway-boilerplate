@@ -104,6 +104,13 @@ async function getCountryCode(
  * Middleware to handle region selection and onboarding status.
  */
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+
+  // Keep UCP endpoints on the root domain untouched so they can be proxied to backend.
+  if (pathname.startsWith("/.well-known") || pathname.startsWith("/ucp")) {
+    return NextResponse.next()
+  }
+
   let redirectUrl = request.nextUrl.href
 
   let response = NextResponse.redirect(redirectUrl, 307)
@@ -116,8 +123,7 @@ export async function middleware(request: NextRequest) {
 
   const countryCode = regionMap && (await getCountryCode(request, regionMap))
 
-  const urlHasCountryCode =
-    countryCode && request.nextUrl.pathname.split("/")[1].includes(countryCode)
+  const urlHasCountryCode = countryCode && pathname.split("/")[1].includes(countryCode)
 
   // if one of the country codes is in the url and the cache id is set, return next
   if (urlHasCountryCode && cacheIdCookie) {
@@ -134,12 +140,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // check if the url is a static asset
-  if (request.nextUrl.pathname.includes(".")) {
+  if (pathname.includes(".")) {
     return NextResponse.next()
   }
 
-  const redirectPath =
-    request.nextUrl.pathname === "/" ? "" : request.nextUrl.pathname
+  const redirectPath = pathname === "/" ? "" : pathname
 
   const queryString = request.nextUrl.search ? request.nextUrl.search : ""
 

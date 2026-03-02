@@ -64,7 +64,7 @@ const handler: ToolHandler = async (params, scope) => {
   const remoteQuery = scope.resolve(ContainerRegistrationKeys.REMOTE_QUERY)
 
   // Try by ID first
-  let queryObject = remoteQueryObjectFromString({
+  const byIdQuery = remoteQueryObjectFromString({
     entryPoint: "product",
     variables: {
       filters: { id: productId },
@@ -72,18 +72,18 @@ const handler: ToolHandler = async (params, scope) => {
     fields: PRODUCT_FIELDS,
   })
 
-  let rows = asArray<any>(await remoteQuery(queryObject))
+  let rows = asArray<any>(await remoteQuery(byIdQuery))
 
   // Fall back to handle
   if (rows.length === 0) {
-    queryObject = remoteQueryObjectFromString({
+    const byHandleQuery = remoteQueryObjectFromString({
       entryPoint: "product",
       variables: {
         filters: { handle: productId },
       },
       fields: PRODUCT_FIELDS,
     })
-    rows = asArray<any>(await remoteQuery(queryObject))
+    rows = asArray<any>(await remoteQuery(byHandleQuery))
   }
 
   if (rows.length === 0) {

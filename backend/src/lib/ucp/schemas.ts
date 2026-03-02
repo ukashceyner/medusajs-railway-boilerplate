@@ -42,6 +42,29 @@ const ucpBuyerSchema = z
   })
   .passthrough()
 
+export const ucpDeliveryAddressSchema = z
+  .object({
+    address_1: z.string(),
+    address_2: z.string().optional(),
+    city: z.string(),
+    province: z.string().optional(),
+    postal_code: z.string(),
+    country_code: z.string().min(2).max(3),
+  })
+  .passthrough()
+
+const ucpGiftCardSchema = z.object({
+  code: z.string(),
+})
+
+const ucpExtensionFields = {
+  discount_codes: z.array(z.string()).optional(),
+  gift_cards: z.array(ucpGiftCardSchema).optional(),
+  delivery_address: ucpDeliveryAddressSchema.optional(),
+  shipping_option_id: z.string().optional(),
+  notes: z.string().optional(),
+}
+
 export const ucpCheckoutCreateSchema = z
   .object({
     line_items: z.array(ucpLineItemCreateSchema).min(1),
@@ -51,6 +74,7 @@ export const ucpCheckoutCreateSchema = z
       .trim()
       .regex(/^[A-Za-z]{3}$/),
     payment: ucpPaymentSchema,
+    ...ucpExtensionFields,
   })
   .passthrough()
 
@@ -64,6 +88,7 @@ export const ucpCheckoutUpdateSchema = z
       .trim()
       .regex(/^[A-Za-z]{3}$/),
     payment: ucpPaymentSchema,
+    ...ucpExtensionFields,
   })
   .passthrough()
 
@@ -78,3 +103,4 @@ export type UcpCheckoutCreateInput = z.infer<typeof ucpCheckoutCreateSchema>
 export type UcpCheckoutUpdateInput = z.infer<typeof ucpCheckoutUpdateSchema>
 export type UcpCheckoutCompleteInput = z.infer<typeof ucpCheckoutCompleteSchema>
 export type UcpPaymentInput = z.infer<typeof ucpPaymentSchema>
+export type UcpDeliveryAddressInput = z.infer<typeof ucpDeliveryAddressSchema>

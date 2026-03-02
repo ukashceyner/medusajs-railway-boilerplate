@@ -68,6 +68,10 @@ const nextConfig = {
         source: "/ucp/v1/:path*",
         destination: `${backendBaseUrl}/ucp/v1/:path*`,
       },
+      {
+        source: "/mcp/:path*",
+        destination: `${backendBaseUrl}/mcp/:path*`,
+      },
     ]
   },
 }

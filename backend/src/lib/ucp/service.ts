@@ -1,5 +1,6 @@
 import {
   addToCartWorkflowId,
+  addShippingMethodToCartWorkflow,
   completeCartWorkflowId,
   createCartWorkflow,
   createPaymentCollectionForCartWorkflowId,
@@ -19,6 +20,7 @@ import {
   UCP_CONTINUE_URL_BASE,
   UCP_DEFAULT_REGION_ID,
   UCP_FAQ_URL,
+  UCP_MCP_ENDPOINT,
   UCP_PRIVACY_URL,
   UCP_REFUND_URL,
   UCP_REST_ENDPOINT,
@@ -30,10 +32,11 @@ import type {
   UcpCheckoutCompleteInput,
   UcpCheckoutCreateInput,
   UcpCheckoutUpdateInput,
+  UcpDeliveryAddressInput,
   UcpPaymentInput,
 } from "./schemas"
 
-type Scope = MedusaRequest["scope"]
+export type Scope = MedusaRequest["scope"]
 
 type UcpStatus =
   | "incomplete"
@@ -78,6 +81,7 @@ type CheckoutBuildOptions = {
 
 const UCP_SERVICE_KEY = "dev.ucp.shopping"
 const UCP_CHECKOUT_CAPABILITY_KEY = "dev.ucp.shopping.checkout"
+const UCP_FULFILLMENT_CAPABILITY_KEY = "dev.ucp.shopping.fulfillment"
 const UCP_MEDUSA_PAYMENT_HANDLER_KEY = "com.medusa.payment"
 
 const CHECKOUT_FIELDS = [
@@ -106,6 +110,12 @@ const CHECKOUT_FIELDS = [
   "shipping_address.first_name",
   "shipping_address.last_name",
   "shipping_address.phone",
+  "shipping_address.address_1",
+  "shipping_address.address_2",
+  "shipping_address.city",
+  "shipping_address.province",
+  "shipping_address.postal_code",
+  "shipping_address.country_code",
   "billing_address.id",
   "billing_address.first_name",
   "billing_address.last_name",
@@ -116,7 +126,7 @@ const CHECKOUT_FIELDS = [
 
 const ORDER_FIELDS = ["id"]
 
-const asArray = <T>(value: unknown): T[] => {
+export const asArray = <T>(value: unknown): T[] => {
   if (Array.isArray(value)) {
     return value as T[]
   }
@@ -131,7 +141,7 @@ const asArray = <T>(value: unknown): T[] => {
   return []
 }
 
-const toMinorUnits = (value: unknown): number => {
+export const toMinorUnits = (value: unknown): number => {
   if (typeof value === "number" && Number.isFinite(value)) {
     return Math.max(0, Math.trunc(value))
   }
@@ -152,7 +162,7 @@ const getContinueUrl = (checkoutId: string) =>
 const getOrderPermalink = (orderId: string) =>
   `${UCP_CONTINUE_URL_BASE.replace(/\/$/, "")}/order/${orderId}`
 
-const getDefaultLinks = () => {
+export const getDefaultLinks = () => {
   const links: Array<{ type: string; url: string }> = [
     { type: "terms_of_service", url: UCP_TERMS_URL },
     { type: "privacy_policy", url: UCP_PRIVACY_URL },
@@ -195,6 +205,7 @@ const buildCheckoutResponseUcp = (providerIds: string[]) => {
     version: UCP_VERSION,
     capabilities: {
       [UCP_CHECKOUT_CAPABILITY_KEY]: [{ version: UCP_VERSION }],
+      [UCP_FULFILLMENT_CAPABILITY_KEY]: [{ version: UCP_VERSION }],
     },
     payment_handlers: buildPaymentHandlers(providerIds),
   }
@@ -336,6 +347,33 @@ const mapBuyer = (cart: any) => {
   }
 }
 
+const mapDeliveryAddress = (cart: any) => {
+  const addr = cart?.shipping_address
+  if (!addr?.address_1 && !addr?.city && !addr?.country_code) {
+    return undefined
+  }
+
+  return {
+    address_1: addr?.address_1 || undefined,
+    address_2: addr?.address_2 || undefined,
+    city: addr?.city || undefined,
+    province: addr?.province || undefined,
+    postal_code: addr?.postal_code || undefined,
+    country_code: addr?.country_code || undefined,
+    first_name: addr?.first_name || undefined,
+    last_name: addr?.last_name || undefined,
+    phone: addr?.phone || undefined,
+  }
+}
+
+const mapShippingMethods = (cart: any) => {
+  return (cart?.shipping_methods ?? []).map((method: any) => ({
+    id: method?.id,
+    shipping_option_id: method?.shipping_option_id,
+    amount: toMinorUnits(method?.amount),
+  }))
+}
+
 const inferInstrumentType = (_providerId: string) => "card"
 
 const mapPaymentInstruments = async (scope: Scope, cart: any) => {
@@ -402,7 +440,7 @@ const listAllPaymentProviderIds = async (scope: Scope): Promise<string[]> => {
     .filter((id): id is string => Boolean(id))
 }
 
-const refetchCart = async (scope: Scope, id: string) => {
+export const refetchCart = async (scope: Scope, id: string) => {
   const remoteQuery = scope.resolve(ContainerRegistrationKeys.REMOTE_QUERY)
   const queryObject = remoteQueryObjectFromString({
     entryPoint: "cart",
@@ -570,7 +608,39 @@ const updateCartBuyer = async (
   cartId: string,
   buyer?: UcpCheckoutCreateInput["buyer"]
 ) => {
-  if (!buyer?.email) {
+  if (!buyer) {
+    return
+  }
+
+  const hasAnyField = buyer.email || buyer.first_name || buyer.last_name || buyer.phone_number
+  if (!hasAnyField) {
+    return
+  }
+
+  const we = scope.resolve(Modules.WORKFLOW_ENGINE)
+  const updateData: Record<string, unknown> = { id: cartId }
+
+  if (buyer.email) {
+    updateData.email = buyer.email
+  }
+
+  if (buyer.first_name || buyer.last_name || buyer.phone_number) {
+    updateData.shipping_address = {
+      first_name: buyer.first_name,
+      last_name: buyer.last_name,
+      phone: buyer.phone_number,
+    }
+  }
+
+  await we.run(updateCartWorkflowId, { input: updateData })
+}
+
+const applyDeliveryAddress = async (
+  scope: Scope,
+  cartId: string,
+  address?: UcpDeliveryAddressInput
+) => {
+  if (!address) {
     return
   }
 
@@ -578,9 +648,123 @@ const updateCartBuyer = async (
   await we.run(updateCartWorkflowId, {
     input: {
       id: cartId,
-      email: buyer.email,
+      shipping_address: {
+        address_1: address.address_1,
+        address_2: address.address_2,
+        city: address.city,
+        province: address.province,
+        postal_code: address.postal_code,
+        country_code: address.country_code,
+      },
     },
   })
+}
+
+const applyDiscountCodes = async (
+  scope: Scope,
+  cartId: string,
+  codes?: string[]
+) => {
+  if (!codes?.length) {
+    return
+  }
+
+  const we = scope.resolve(Modules.WORKFLOW_ENGINE)
+  await we.run(updateCartWorkflowId, {
+    input: { id: cartId, promo_codes: codes },
+  })
+}
+
+const applyGiftCards = async (
+  scope: Scope,
+  cartId: string,
+  giftCards?: Array<{ code: string }>
+) => {
+  if (!giftCards?.length) {
+    return
+  }
+
+  const codes = giftCards.map((gc) => gc.code)
+  const we = scope.resolve(Modules.WORKFLOW_ENGINE)
+  await we.run(updateCartWorkflowId, {
+    input: { id: cartId, promo_codes: codes },
+  })
+}
+
+const applyShippingOption = async (
+  scope: Scope,
+  cartId: string,
+  shippingOptionId?: string
+) => {
+  if (!shippingOptionId) {
+    return
+  }
+
+  await addShippingMethodToCartWorkflow(scope).run({
+    input: {
+      cart_id: cartId,
+      options: [{ id: shippingOptionId }],
+    },
+  })
+}
+
+const applyNotes = async (
+  scope: Scope,
+  cartId: string,
+  notes?: string,
+  existingMetadata?: Record<string, unknown>
+) => {
+  if (notes === undefined) {
+    return
+  }
+
+  const we = scope.resolve(Modules.WORKFLOW_ENGINE)
+  await we.run(updateCartWorkflowId, {
+    input: {
+      id: cartId,
+      metadata: { ...(existingMetadata ?? {}), ucp_notes: notes },
+    },
+  })
+}
+
+export const listShippingOptionsForCart = async (
+  scope: Scope,
+  cartId: string
+) => {
+  const remoteQuery = scope.resolve(ContainerRegistrationKeys.REMOTE_QUERY)
+  const queryObject = remoteQueryObjectFromString({
+    entryPoint: "shipping_option",
+    variables: {
+      context: { cart_id: cartId },
+    },
+    fields: ["id", "name", "amount", "provider_id"],
+  })
+
+  return asArray<{
+    id?: string
+    name?: string
+    amount?: number
+    provider_id?: string
+  }>(await remoteQuery(queryObject))
+}
+
+const applyExtensions = async (
+  scope: Scope,
+  cartId: string,
+  input: {
+    delivery_address?: UcpDeliveryAddressInput
+    discount_codes?: string[]
+    gift_cards?: Array<{ code: string }>
+    shipping_option_id?: string
+    notes?: string
+  },
+  existingMetadata?: Record<string, unknown>
+) => {
+  await applyDeliveryAddress(scope, cartId, input.delivery_address)
+  await applyDiscountCodes(scope, cartId, input.discount_codes)
+  await applyGiftCards(scope, cartId, input.gift_cards)
+  await applyShippingOption(scope, cartId, input.shipping_option_id)
+  await applyNotes(scope, cartId, input.notes, existingMetadata)
 }
 
 const replaceCartItems = async (
@@ -662,6 +846,9 @@ const buildCheckoutResponse = async (
       ? options.messages
       : buildDefaultMessages(cart, status)
   const buyer = mapBuyer(cart)
+  const deliveryAddress = mapDeliveryAddress(cart)
+  const shippingMethods = mapShippingMethods(cart)
+  const notes = cart?.metadata?.ucp_notes as string | undefined
   const now = cart?.created_at ? new Date(cart.created_at) : null
   const expiresAt =
     now && Number.isFinite(now.getTime())
@@ -683,6 +870,18 @@ const buildCheckoutResponse = async (
 
   if (buyer) {
     response.buyer = buyer
+  }
+
+  if (deliveryAddress) {
+    response.delivery_address = deliveryAddress
+  }
+
+  if (shippingMethods.length > 0) {
+    response.shipping_methods = shippingMethods
+  }
+
+  if (notes) {
+    response.notes = notes
   }
 
   if (messages.length > 0) {
@@ -722,6 +921,12 @@ export const buildBusinessProfile = async (scope: Scope) => {
             schema: "https://ucp.dev/services/shopping/rest.openapi.json",
             endpoint: UCP_REST_ENDPOINT,
           },
+          {
+            version: UCP_VERSION,
+            transport: "mcp",
+            spec: "https://ucp.dev/specification/checkout-mcp",
+            endpoint: UCP_MCP_ENDPOINT,
+          },
         ],
       },
       capabilities: {
@@ -730,6 +935,12 @@ export const buildBusinessProfile = async (scope: Scope) => {
             version: UCP_VERSION,
             spec: "https://ucp.dev/specification/checkout",
             schema: "https://ucp.dev/schemas/shopping/checkout.json",
+          },
+        ],
+        [UCP_FULFILLMENT_CAPABILITY_KEY]: [
+          {
+            version: UCP_VERSION,
+            spec: "https://ucp.dev/specification/fulfillment",
           },
         ],
       },
@@ -754,6 +965,9 @@ export const createCheckout = async (
       })),
     },
   })
+
+  await updateCartBuyer(scope, result.id, input.buyer)
+  await applyExtensions(scope, result.id, input)
 
   let cart = await refetchCart(scope, result.id)
   cart = await applyPaymentSelectionIfProvided(scope, cart, input.payment)
@@ -786,6 +1000,7 @@ export const updateCheckout = async (
 
   await replaceCartItems(scope, cart, input.line_items)
   await updateCartBuyer(scope, id, input.buyer)
+  await applyExtensions(scope, id, input, cart?.metadata)
 
   let updatedCart = await refetchCart(scope, id)
   updatedCart = await applyPaymentSelectionIfProvided(

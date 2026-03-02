@@ -12,6 +12,9 @@ export const metadata: Metadata = {
     "A performant frontend ecommerce starter template with Next.js 15 and Medusa.",
 }
 
+const serializeJsonLd = (data: Record<string, unknown>) =>
+  JSON.stringify(data).replace(/</g, "\\u003c")
+
 export default async function Home(props: {
   params: Promise<{ countryCode: string }>
 }) {
@@ -31,29 +34,6 @@ export default async function Home(props: {
 
   const baseUrl = getBaseURL()
 
-  const webSiteJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "Medusa Store",
-    url: baseUrl,
-    potentialAction: {
-      "@type": "SearchAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${baseUrl}/${countryCode}/store?q={search_term_string}`,
-      },
-      "query-input": "required name=search_term_string",
-    },
-  }
-
-  const organizationJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: "Medusa Store",
-    url: baseUrl,
-    logo: `${baseUrl}/opengraph-image.jpg`,
-  }
-
   const collectionListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -70,19 +50,7 @@ export default async function Home(props: {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(webSiteJsonLd),
-        }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(organizationJsonLd),
-        }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(collectionListJsonLd),
+          __html: serializeJsonLd(collectionListJsonLd),
         }}
       />
       <Hero />

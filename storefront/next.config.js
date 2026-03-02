@@ -61,6 +61,10 @@ const nextConfig = {
 
     return [
       {
+        source: "/llms.txt",
+        destination: `${backendBaseUrl}/llms.txt`,
+      },
+      {
         source: "/.well-known/ucp",
         destination: `${backendBaseUrl}/.well-known/ucp`,
       },

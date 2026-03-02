@@ -43,6 +43,9 @@ export const UCP_REQUIRE_REQUEST_SIGNATURES =
   process.env.UCP_REQUIRE_REQUEST_SIGNATURES === "true"
 export const UCP_IDEMPOTENCY_TABLE =
   process.env.UCP_IDEMPOTENCY_TABLE || "ucp_idempotency_keys"
+export const UCP_MCP_ENDPOINT =
+  process.env.UCP_MCP_ENDPOINT ||
+  `${UCP_BASE_URL.replace(/\/$/, "")}/mcp`
 
 // S3 Configuration
 export const AWS_DEFAULT_REGION = process.env.AWS_DEFAULT_REGION

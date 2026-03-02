@@ -106,8 +106,8 @@ async function getCountryCode(
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
-  // Keep UCP endpoints on the root domain untouched so they can be proxied to backend.
-  if (pathname.startsWith("/.well-known") || pathname.startsWith("/ucp")) {
+  // Keep UCP/MCP endpoints on the root domain untouched so they can be proxied to backend.
+  if (pathname.startsWith("/.well-known") || pathname.startsWith("/ucp") || pathname.startsWith("/mcp")) {
     return NextResponse.next()
   }
 

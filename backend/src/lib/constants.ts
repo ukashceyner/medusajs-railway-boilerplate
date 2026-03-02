@@ -18,6 +18,23 @@ export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET
 export const SHOULD_DISABLE_ADMIN = process.env.SHOULD_DISABLE_ADMIN === "true"
 export const WORKER_MODE = (process.env.MEDUSA_WORKER_MODE as "shared" | "worker" | "server") || "shared"
 
+// UCP configuration
+export const UCP_VERSION = process.env.UCP_VERSION || "2026-01-11"
+export const UCP_BASE_URL = process.env.UCP_BASE_URL || BACKEND_URL
+export const UCP_REST_ENDPOINT =
+  process.env.UCP_REST_ENDPOINT ||
+  `${UCP_BASE_URL.replace(/\/$/, "")}/ucp/v1`
+export const UCP_CONTINUE_URL_BASE =
+  process.env.UCP_CONTINUE_URL_BASE || UCP_BASE_URL
+export const UCP_DEFAULT_REGION_ID = process.env.UCP_DEFAULT_REGION_ID
+export const UCP_TERMS_URL =
+  process.env.UCP_TERMS_URL || `${UCP_BASE_URL.replace(/\/$/, "")}/terms`
+export const UCP_PRIVACY_URL =
+  process.env.UCP_PRIVACY_URL || `${UCP_BASE_URL.replace(/\/$/, "")}/privacy`
+export const UCP_REFUND_URL = process.env.UCP_REFUND_URL
+export const UCP_SHIPPING_URL = process.env.UCP_SHIPPING_URL
+export const UCP_FAQ_URL = process.env.UCP_FAQ_URL
+
 // S3 Configuration
 export const AWS_DEFAULT_REGION = process.env.AWS_DEFAULT_REGION
 export const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID

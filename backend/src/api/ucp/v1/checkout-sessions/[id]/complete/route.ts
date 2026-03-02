@@ -11,7 +11,7 @@ import { completeCheckout } from "../../../../../../lib/ucp/service"
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
-    getUcpAgentProfileOrThrow(req)
+    await getUcpAgentProfileOrThrow(req)
 
     const parsedBody = ucpCheckoutCompleteSchema.safeParse(req.body ?? {})
     if (!parsedBody.success) {

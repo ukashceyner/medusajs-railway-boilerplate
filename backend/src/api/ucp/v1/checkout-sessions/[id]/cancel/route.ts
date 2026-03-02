@@ -9,7 +9,7 @@ import { cancelCheckout } from "../../../../../../lib/ucp/service"
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
-    getUcpAgentProfileOrThrow(req)
+    await getUcpAgentProfileOrThrow(req)
 
     const response = await runWithIdempotency(req, "cancel_checkout", async () => {
       const checkout = await cancelCheckout(req.scope, req.params.id)

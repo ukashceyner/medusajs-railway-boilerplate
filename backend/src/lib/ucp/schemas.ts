@@ -15,7 +15,7 @@ export const ucpPaymentInstrumentSchema = z
 export const ucpPaymentSchema = z
   .object({
     selected_instrument_id: z.string().optional(),
-    instruments: z.array(ucpPaymentInstrumentSchema).optional(),
+    instruments: z.array(ucpPaymentInstrumentSchema).min(1).optional(),
   })
   .passthrough()
 
@@ -44,20 +44,26 @@ const ucpBuyerSchema = z
 
 export const ucpCheckoutCreateSchema = z
   .object({
-    line_items: z.array(ucpLineItemCreateSchema),
+    line_items: z.array(ucpLineItemCreateSchema).min(1),
     buyer: ucpBuyerSchema.optional(),
-    currency: z.string(),
-    payment: ucpPaymentSchema.optional(),
+    currency: z
+      .string()
+      .trim()
+      .regex(/^[A-Za-z]{3}$/),
+    payment: ucpPaymentSchema,
   })
   .passthrough()
 
 export const ucpCheckoutUpdateSchema = z
   .object({
     id: z.string().optional(),
-    line_items: z.array(ucpLineItemUpdateSchema),
+    line_items: z.array(ucpLineItemUpdateSchema).min(1),
     buyer: ucpBuyerSchema.optional(),
-    currency: z.string(),
-    payment: ucpPaymentSchema.optional(),
+    currency: z
+      .string()
+      .trim()
+      .regex(/^[A-Za-z]{3}$/),
+    payment: ucpPaymentSchema,
   })
   .passthrough()
 

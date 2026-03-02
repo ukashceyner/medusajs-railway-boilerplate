@@ -34,6 +34,15 @@ export const UCP_PRIVACY_URL =
 export const UCP_REFUND_URL = process.env.UCP_REFUND_URL
 export const UCP_SHIPPING_URL = process.env.UCP_SHIPPING_URL
 export const UCP_FAQ_URL = process.env.UCP_FAQ_URL
+export const UCP_VERIFY_PLATFORM_PROFILE =
+  process.env.UCP_VERIFY_PLATFORM_PROFILE === "true"
+export const UCP_PLATFORM_PROFILE_TIMEOUT_MS =
+  Number.parseInt(process.env.UCP_PLATFORM_PROFILE_TIMEOUT_MS || "3000", 10) ||
+  3000
+export const UCP_REQUIRE_REQUEST_SIGNATURES =
+  process.env.UCP_REQUIRE_REQUEST_SIGNATURES === "true"
+export const UCP_IDEMPOTENCY_TABLE =
+  process.env.UCP_IDEMPOTENCY_TABLE || "ucp_idempotency_keys"
 
 // S3 Configuration
 export const AWS_DEFAULT_REGION = process.env.AWS_DEFAULT_REGION

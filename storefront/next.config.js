@@ -2,6 +2,7 @@
 
 /**
  * Medusa Cloud-related environment variables
+ * Proxies /llms.txt, UCP, and MCP routes to the backend
  */
 const S3_HOSTNAME = process.env.MEDUSA_CLOUD_S3_HOSTNAME
 const S3_PATHNAME = process.env.MEDUSA_CLOUD_S3_PATHNAME

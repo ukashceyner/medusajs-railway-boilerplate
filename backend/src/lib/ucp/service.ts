@@ -192,6 +192,8 @@ const buildPaymentHandlers = (providerIds: string[]) => {
     [UCP_MEDUSA_PAYMENT_HANDLER_KEY]: normalized.map((providerId) => ({
       id: providerId,
       version: UCP_VERSION,
+      spec: "https://ucp.dev/specification/payment-handler",
+      schema: "https://ucp.dev/schemas/payment/handler.json",
       available_instruments: [{ type: "card" }],
       config: {
         provider_id: providerId,
@@ -912,6 +914,7 @@ export const buildBusinessProfile = async (scope: Scope) => {
   return {
     ucp: {
       version: UCP_VERSION,
+      signing_keys: [],
       services: {
         [UCP_SERVICE_KEY]: [
           {
@@ -925,6 +928,7 @@ export const buildBusinessProfile = async (scope: Scope) => {
             version: UCP_VERSION,
             transport: "mcp",
             spec: "https://ucp.dev/specification/checkout-mcp",
+            schema: "https://ucp.dev/services/shopping/mcp.json",
             endpoint: UCP_MCP_ENDPOINT,
           },
         ],
@@ -941,6 +945,7 @@ export const buildBusinessProfile = async (scope: Scope) => {
           {
             version: UCP_VERSION,
             spec: "https://ucp.dev/specification/fulfillment",
+            schema: "https://ucp.dev/schemas/shopping/fulfillment.json",
           },
         ],
       },

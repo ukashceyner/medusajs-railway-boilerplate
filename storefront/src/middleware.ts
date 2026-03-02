@@ -149,6 +149,22 @@ export async function middleware(request: NextRequest) {
 
   const queryString = request.nextUrl.search ? request.nextUrl.search : ""
 
+  // For root requests, rewrite instead of redirect so crawlers can read homepage HTML.
+  if (!urlHasCountryCode && countryCode && pathname === "/") {
+    const rewriteUrl = request.nextUrl.clone()
+    rewriteUrl.pathname = `/${countryCode}`
+
+    const rewriteResponse = NextResponse.rewrite(rewriteUrl)
+
+    if (!cacheIdCookie) {
+      rewriteResponse.cookies.set("_medusa_cache_id", cacheId, {
+        maxAge: 60 * 60 * 24,
+      })
+    }
+
+    return rewriteResponse
+  }
+
   // If no country code is set, we redirect to the relevant region.
   if (!urlHasCountryCode && countryCode) {
     redirectUrl = `${request.nextUrl.origin}/${countryCode}${redirectPath}${queryString}`

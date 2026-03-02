@@ -147,7 +147,9 @@ const handler: ToolHandler = async (params, scope) => {
         input: {
           cart_id: cartId,
           item_id: item.line_item_id,
-          quantity: item.quantity,
+          update: {
+            quantity: item.quantity,
+          },
         },
       })
     }

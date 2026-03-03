@@ -1,6 +1,7 @@
 import { registerTool } from "../server"
 import { searchCatalogTool } from "./search-catalog"
 import { getProductDetailsTool } from "./get-product-details"
+import { createCartTool } from "./create-cart"
 import { getCartTool } from "./get-cart"
 import { updateCartTool } from "./update-cart"
 import { searchPoliciesTool } from "./search-policies"
@@ -21,6 +22,11 @@ export function registerAllTools() {
     getProductDetailsTool.definition.name,
     getProductDetailsTool.definition,
     getProductDetailsTool.handler
+  )
+  registerTool(
+    createCartTool.definition.name,
+    createCartTool.definition,
+    createCartTool.handler
   )
   registerTool(
     getCartTool.definition.name,
